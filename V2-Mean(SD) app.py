@@ -121,17 +121,17 @@ def standardize_categories(df):
 
         if "non" in cat_clean and "specific" in cat_clean:
             rename_map[cat] = "Other rare tumors"
-        elif "hematolog" in cat_clean:
+        elif "hematological" in cat_clean:
             rename_map[cat] = "Haematological"
-        elif "gynecolog" in cat_clean:
+        elif "gynecological" in cat_clean:
             rename_map[cat] = "Gynecological"
-        elif "urolog" in cat_clean:
+        elif "urological" in cat_clean:
             rename_map[cat] = "Urological"
-        elif "neurolog" in cat_clean:
+        elif "neurological" in cat_clean:
             rename_map[cat] = "Neurological"
         elif "breast" in cat_clean:
             rename_map[cat] = "Breast"
-        elif "pulmon" in cat_clean:
+        elif "pulmonary" in cat_clean:
             rename_map[cat] = "Pulmonary"
         elif "gastro" in cat_clean:
             rename_map[cat] = "Gastrointestinal"
