@@ -112,35 +112,51 @@ category_order = [
     "Other rare tumors"
 ]
 
+import re
+
 def standardize_categories(df):
     df = df.copy()
     rename_map = {}
 
     for cat in df.index:
+        if pd.isna(cat):
+            continue
         cat_clean = str(cat).strip().lower()
+        cat_clean = re.sub(r'[^a-z0-9]', '', cat_clean)  # remove spaces, symbols
 
         if "non" in cat_clean and "specific" in cat_clean:
             rename_map[cat] = "Other rare tumors"
-        elif "hematological" in cat_clean:
+
+        elif "hematolog" in cat_clean or "haematolog" in cat_clean:
             rename_map[cat] = "Haematological"
-        elif "gynecological" in cat_clean:
-            rename_map[cat] = "Gynecological"
-        elif "urological" in cat_clean:
-            rename_map[cat] = "Urological"
-        elif "neurological" in cat_clean:
+
+        elif "neurolog" in cat_clean:
             rename_map[cat] = "Neurological"
+
+        elif "gynecolog" in cat_clean:
+            rename_map[cat] = "Gynecological"
+
+        elif "urolog" in cat_clean:
+            rename_map[cat] = "Urological"
+
         elif "breast" in cat_clean:
             rename_map[cat] = "Breast"
-        elif "pulmonary" in cat_clean:
+
+        elif "pulmon" in cat_clean:
             rename_map[cat] = "Pulmonary"
+
         elif "gastro" in cat_clean:
             rename_map[cat] = "Gastrointestinal"
+
         elif "head" in cat_clean and "neck" in cat_clean:
             rename_map[cat] = "Head & Neck"
+
         elif "thyroid" in cat_clean:
             rename_map[cat] = "Thyroid"
+
         elif "sarcoma" in cat_clean:
             rename_map[cat] = "Sarcoma"
+
         elif "retino" in cat_clean:
             rename_map[cat] = "Retinoblastoma"
 
