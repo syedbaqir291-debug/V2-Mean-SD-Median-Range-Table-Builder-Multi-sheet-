@@ -78,10 +78,18 @@ def read_multi_sheets(file, sheet_list):
     for sheet in sheet_list:
         df = pd.read_excel(file, sheet_name=sheet, header=header_row-1)
         df = df.iloc[:, start_idx:end_idx+1]
+
+        # Rename first column to "Category"
         df = df.rename(columns={df.columns[0]: "Category"})
+        df["Category"] = df["Category"].astype(str).str.strip()
+
+        # Set index and clean columns
         df = df.set_index("Category")
         df.columns = [str(c).strip() for c in df.columns]
+
+        # Coerce all values to numeric where possible
         df = df.apply(pd.to_numeric, errors='coerce')
+
         dfs.append(df)
 
     return dfs
@@ -113,37 +121,26 @@ def standardize_categories(df):
 
         if "non" in cat_clean and "specific" in cat_clean:
             rename_map[cat] = "Other rare tumors"
-
         elif "hematolog" in cat_clean:
             rename_map[cat] = "Haematological"
-
         elif "gynecolog" in cat_clean:
             rename_map[cat] = "Gynecological"
-
         elif "urolog" in cat_clean:
             rename_map[cat] = "Urological"
-
         elif "neurolog" in cat_clean:
             rename_map[cat] = "Neurological"
-
         elif "breast" in cat_clean:
             rename_map[cat] = "Breast"
-
         elif "pulmon" in cat_clean:
             rename_map[cat] = "Pulmonary"
-
         elif "gastro" in cat_clean:
             rename_map[cat] = "Gastrointestinal"
-
         elif "head" in cat_clean and "neck" in cat_clean:
             rename_map[cat] = "Head & Neck"
-
         elif "thyroid" in cat_clean:
             rename_map[cat] = "Thyroid"
-
         elif "sarcoma" in cat_clean:
             rename_map[cat] = "Sarcoma"
-
         elif "retino" in cat_clean:
             rename_map[cat] = "Retinoblastoma"
 
@@ -160,24 +157,38 @@ mean_dfs = [standardize_categories(df) for df in mean_dfs]
 sd_dfs = [standardize_categories(df) for df in sd_dfs]
 
 # ===============================
-# COMBINE VALUES
+# SAFE COMBINE VALUES
 # ===============================
 def combine_values(dfs, category, column):
+    """
+    Safely combine values from multiple dfs.
+    Handles duplicates, missing, and multiple rows (Series).
+    """
     values = []
+
     for df in dfs:
         if category in df.index and column in df.columns:
             val = df.loc[category, column]
-            if pd.notna(val):
-                values.append(val)
-            else:
+
+            # If multiple rows found (Series), take first non-null
+            if isinstance(val, pd.Series):
+                val = val.dropna()
+                val = val.iloc[0] if not val.empty else ""
+
+            if pd.isna(val):
                 values.append("")
+            else:
+                values.append(val)
         else:
             values.append("")
+
     return values
 
+# ===============================
+# BUILD FINAL TABLE
+# ===============================
 base_df = mean_dfs[0]
 columns = base_df.columns.tolist()
-
 final_df = pd.DataFrame(index=category_order, columns=columns)
 
 for cat in category_order:
@@ -223,9 +234,7 @@ def to_excel_bytes(df):
         df.to_excel(writer, sheet_name="Mean_SD_Table", index=False)
     return output.getvalue()
 
-excel_bytes = to_excel_bytes(
-    final_df.reset_index().rename(columns={"index":"Category"})
-)
+excel_bytes = to_excel_bytes(final_df.reset_index().rename(columns={"index":"Category"}))
 
 st.download_button(
     label="Download Excel",
